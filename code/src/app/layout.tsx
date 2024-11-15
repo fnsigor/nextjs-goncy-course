@@ -3,8 +3,12 @@ import type {Metadata} from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Restaurancy",
+  title: "Restaurancy - Hello World",
+  description: "Os melhores restaurantes do mundo",
+  keywords: ["restaurante", "comida", "comer", "jantar", "almoço"],
 };
+
+//se defirmos metadata no layout, ela sera espelhada pra todos os pages children
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (

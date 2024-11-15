@@ -113,6 +113,16 @@ const restaurants: Restaurant[] = [
     ratings: 150,
     image: "https://picsum.photos/id/431/480/300",
   },
+  {
+    id: "13",
+    name: "Baratie",
+    description: "A family-friendly restaurant with a wide variety of ice cream flavors.",
+    address: "852 Oak Ave. Anytown USA",
+    score: 5.0,
+    ratings: 350,
+    image:
+      "https://imgs.search.brave.com/wElXwJlX_f67oHA6wxE4xEEsYgQaDBtE79GzZBw5DXw/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMxLmNicmltYWdl/cy5jb20vd29yZHBy/ZXNzL3dwLWNvbnRl/bnQvdXBsb2Fkcy8y/MDIyLzEwL0JhcmF0/aWUtcmVzdGF1cmFu/dC1pbi1PbmUtUGll/Y2UuanBn",
+  },
 ];
 
 // Simular un delay en la respuesta de la API
@@ -121,15 +131,46 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, Math.
 const api = {
   // Obtener todos los restaurantes
   list: async (): Promise<Restaurant[]> => {
-    // Simular un delay en la respuesta de la API
-    await sleep(750);
+    // Obtemos a informação do Google Sheets em formato texto e a dividimos por linhas, pulamos a primeira linha porque é o cabeçalho
+    //omitindo o primeiro dado pq sao os titulos das colunas
 
+    //com revaçidate, podemos ter paginas estaticas com dados atualizados
+    const [, ...data] = await fetch(
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJ_LEn3u-MIX44qRLJMX3JJYDrsAFf-yJYGJlgexjO4KzGcvDv1Ybn7LXfZ-M-iPFTwEGmpdrz6Npn/pub?output=csv",
+      {
+        cache: "force-cache",
+        next: {
+          // revalidate: 60,
+          tags: ["restaurants"],
+        },
+      },
+    )
+      .then((res) => res.text())
+      .then((text) => text.split("\n"));
+
+    // Convertemos cada linha em um objeto Restaurant, certifique-se de que os campos não possuam `,`
+
+    const restaurants: Restaurant[] = data.map((row) => {
+      const [id, name, description, address, score, ratings, image] = row.split(",");
+
+      return {
+        id,
+        name,
+        description,
+        address,
+        score: Number(score),
+        ratings: Number(ratings),
+        image,
+      };
+    });
+
+    // O retornamos
     return restaurants;
   },
   // Obtener un restaurante específico por su ID
   fetch: async (id: Restaurant["id"]): Promise<Restaurant> => {
     // Simular un delay en la respuesta de la API
-    await sleep(750);
+    await sleep(7500);
 
     // Buscar el restaurante con el ID correspondiente
     const restaurant = restaurants.find((restaurant) => restaurant.id === id);
@@ -140,6 +181,16 @@ const api = {
     }
 
     return restaurant;
+  },
+
+  search: async (query: string = ""): Promise<Restaurant[]> => {
+    // Obtemos os restaurantes
+    const results = await api.list();
+
+    // Filtramos por nome
+    return results.filter((restaurant) =>
+      restaurant.name.toLowerCase().includes(query.toLowerCase()),
+    );
   },
 };
 
